@@ -21,8 +21,8 @@ class User {
     const hashPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(`
-      INSERT INTO users (username, password, first_name, last_name, phone, join_at)
-      VALUES ($1, $2, $3, $4, $5, current_timestamp)
+      INSERT INTO users (username, password, first_name, last_name, phone, join_at, last_login_at)
+      VALUES ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
       RETURNING username, password, first_name, last_name, phone, join_at
     `, [username, hashPassword, first_name, last_name, phone]);
 
@@ -99,8 +99,7 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT username, 
-              password, 
+      `SELECT username,
               first_name, 
               last_name, 
               phone, 
@@ -130,23 +129,29 @@ class User {
   static async messagesFrom(username) {
 
     const messageResult = await db.query(`
-      SELECT id, to_username, body, sent_at, read_at
+      SELECT id, to_username AS to_user, body, sent_at, read_at
       FROM messages
       WHERE from_username = $1
     `, [username]);
 
     let messages = messageResult.rows;
 
+    console.log("messages: ", messages);
+
     for (let i = 0; i < messages.length; i++) {
-      const toUser = messages[i].to_username;
+      const toUser = messages[i].to_user;
+
       const userResult = await db.query(`
         SELECT username, first_name, last_name, phone
         FROM users
         WHERE username = $1
         `, [toUser]);
+
       const toUserInfo = userResult.rows[0];
 
-      messages[i].to_username = toUserInfo;
+      console.log("toUserInfo: ", toUserInfo);
+
+      messages[i].to_user = toUserInfo;
     }
 
     return messages;
@@ -163,7 +168,7 @@ class User {
   static async messagesTo(username) {
 
     const messageResult = await db.query(`
-      SELECT id, from_username, body, sent_at, read_at
+      SELECT id, from_username AS from_user, body, sent_at, read_at
       FROM messages
       WHERE to_username = $1
     `, [username]);
@@ -171,7 +176,7 @@ class User {
     let messages = messageResult.rows;
 
     for (let i = 0; i < messages.length; i++) {
-      const fromUser = messages[i].from_username;
+      const fromUser = messages[i].from_user;
       const userResult = await db.query(`
         SELECT username, first_name, last_name, phone
         FROM users
@@ -179,7 +184,7 @@ class User {
         `, [fromUser]);
       const fromUserInfo = userResult.rows[0];
 
-      messages[i].from_username = fromUserInfo;
+      messages[i].from_user = fromUserInfo;
     }
 
     return messages;
