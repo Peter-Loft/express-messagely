@@ -2,8 +2,13 @@
 
 const Router = require("express").Router;
 const router = new Router();
+const { User } = require("../models/user.js");
 
 /** POST /login: {username, password} => {token} */
+router.post("/login", async function (req,res,next) {
+  const {username, password} = req.body;
+
+});
 
 
 /** POST /register: registers, logs in, and returns token.
