@@ -75,8 +75,14 @@ class User {
 
   static async all() {
     const result = await db.query(
-      `SELECT username, password, first_name, last_name, phone
-      from users`
+      `SELECT username, 
+              password, 
+              first_name, 
+              last_name, 
+              phone, 
+              join_at,
+              last_login_at
+      FROM users`
     );
 
     const users = result.rows;
@@ -94,6 +100,25 @@ class User {
    *          last_login_at } */
 
   static async get(username) {
+    const result = await db.query(
+      `SELECT username, 
+              password, 
+              first_name, 
+              last_name, 
+              phone, 
+              join_at,
+              last_login_at
+      FROM users
+      WHERE username = $1`, [username]
+    );
+
+    const user = result.rows[0];
+
+    if (!user) {
+      throw new NotFoundError(`User: ${username} not found`);
+    }
+
+    return user;
   }
 
   /** Return messages from this user.
@@ -105,6 +130,34 @@ class User {
    */
 
   static async messagesFrom(username) {
+
+    const messageResult = await db.query(`
+      SELECT id, to_username, body, sent_at, read_at
+      FROM messages
+      WHERE from_username = $1
+    `, [username]);
+
+    // TODO: Validate username, and for case of no sent messages,
+    // but still valid user.
+
+    let messages = messageResult.rows;
+
+    for (let i=0; i < messages.length; i++) {
+      const toUser = messages[i].to_username;
+      const userResult = await db.query(`
+        SELECT username, first_name, last_name, phone
+        FROM users
+        WHERE username = $1
+        `, [toUser]);
+      const toUserInfo = userResult.rows[0];
+
+      messages[i].to_username = toUserInfo;
+    }
+
+
+
+    
+
   }
 
   /** Return messages to this user.
