@@ -7,6 +7,7 @@ const { DB_URI,
   SECRET_KEY,
   BCRYPT_WORK_FACTOR } = require("../config.js");
 
+
 /** User of the site. */
 
 class User {
@@ -16,13 +17,13 @@ class User {
    */
 
   static async register({ username, password, first_name, last_name, phone }) {
-    const { username, password, first_name, last_name, phone } = req.body;
-    const hashPassword = await brcypt.hash(password, BCRYPT_WORK_FACTOR);
+    // const { username, password, first_name, last_name, phone } = req.body;
+    const hashPassword = await bcrypt.hash(password, BCRYPT_WORK_FACTOR);
 
     const result = await db.query(`
-      INSERT INTO users (username, password, first_name, last_name, phone, joined_at)
+      INSERT INTO users (username, password, first_name, last_name, phone, join_at)
       VALUES ($1, $2, $3, $4, $5, current_timestamp)
-      RETURNING (username, password, first_name, last_name, phone, joined_at)
+      RETURNING username, password, first_name, last_name, phone, join_at
     `, [username, hashPassword, first_name, last_name, phone]);
 
     const user = result.rows[0];
@@ -76,16 +77,13 @@ class User {
   static async all() {
     const result = await db.query(
       `SELECT username, 
-              password, 
               first_name, 
-              last_name, 
-              phone, 
-              join_at,
-              last_login_at
+              last_name
       FROM users`
     );
 
     const users = result.rows;
+    console.log("$$$$ users: ", users)
 
     return users;
   }
@@ -137,12 +135,9 @@ class User {
       WHERE from_username = $1
     `, [username]);
 
-    // TODO: Validate username, and for case of no sent messages,
-    // but still valid user.
-
     let messages = messageResult.rows;
 
-    for (let i=0; i < messages.length; i++) {
+    for (let i = 0; i < messages.length; i++) {
       const toUser = messages[i].to_username;
       const userResult = await db.query(`
         SELECT username, first_name, last_name, phone
@@ -154,10 +149,7 @@ class User {
       messages[i].to_username = toUserInfo;
     }
 
-
-
-    
-
+    return messages;
   }
 
   /** Return messages to this user.
@@ -169,6 +161,28 @@ class User {
    */
 
   static async messagesTo(username) {
+
+    const messageResult = await db.query(`
+      SELECT id, from_username, body, sent_at, read_at
+      FROM messages
+      WHERE to_username = $1
+    `, [username]);
+
+    let messages = messageResult.rows;
+
+    for (let i = 0; i < messages.length; i++) {
+      const fromUser = messages[i].from_username;
+      const userResult = await db.query(`
+        SELECT username, first_name, last_name, phone
+        FROM users
+        WHERE username = $1
+        `, [fromUser]);
+      const fromUserInfo = userResult.rows[0];
+
+      messages[i].from_username = fromUserInfo;
+    }
+
+    return messages;
   }
 }
 
