@@ -40,24 +40,60 @@ describe("Testing user routes", function () {
   describe("Testing GET users/", function () {
     test("Success condition", async function () {
       // user is logged in and receives all data
-      console.log("$$$$$$$ test1Token: ", test1Token);
-
-      const response = await request(app).get("/users").send({ _token: test1Token });
+      const response = await request(app)
+        .get("/users")
+        .send({ _token: test1Token });
 
       expect(response.statusCode).toEqual(200);
-      expect(response.body).toEqual.any(Array);
-      expect(response.body[1]).toEqual({
+      expect(response.body.users).toEqual(expect.any(Object));
+      expect(response.body.users[0]).toEqual({
         username: "test1",
         first_name: "Test1",
         last_name: "Testy1"
       });
+    });
+    test("Fail condition: no token", async function () {
+      const response = await request(app).get("/users");
+
+      expect(response.statusCode).toEqual(401);
+      expect(response.body).toEqual({
+        "error": {
+          "message": "Unauthorized",
+          "status": 401
+        }
+      });
+    });
+    test("Fail condition: Invalid token", async function () {
+      const response = await request(app)
+        .get("/users")
+        .send({ _token: "failure" });
+      expect(response.statusCode).toEqual(401);
+      expect(response.body).toEqual({
+        "error": {
+          "message": "Unauthorized",
+          "status": 401
+        }
+      });
+    });
+
+  });
+
+  describe("Testing GET /users/:username", function () {
+    test("Testing Successful GET", async function () {
+      const response = await request(app)
+        .get("/users/test1")
+        .send({ _token: test1Token });
+      
+      expect(response.statusCode).toEqual(200);
+      expect(response.body.user.username).toEqual("test1");
+      expect(response.body.user.first_name).toEqual("Test1");
+      expect(response.body.user.last_name).toEqual("Testy1");
+      expect(response.body.user.phone).toEqual("+14155550000");
+      expect(new Date(response.body.user.join_at)).toEqual(expect.any(Date));
+      expect(new Date(response.body.user.last_login_at)).toEqual(expect.any(Date));
 
 
     });
-    // test("Failure condition", async function () {
-
-    // });
-
   });
 
 });
