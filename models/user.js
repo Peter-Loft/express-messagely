@@ -83,7 +83,6 @@ class User {
     );
 
     const users = result.rows;
-    console.log("$$$$ users: ", users)
 
     return users;
   }

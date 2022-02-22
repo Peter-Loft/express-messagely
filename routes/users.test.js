@@ -11,7 +11,7 @@ const { SECRET_KEY } = require("../config");
 let test1Token;
 let test2Token;
 
-describe("Testing user routes", async function () {
+describe("Testing user routes", function () {
   beforeEach(async function () {
     await db.query("DELETE FROM messages");
     await db.query("DELETE FROM users");
@@ -40,7 +40,17 @@ describe("Testing user routes", async function () {
   describe("Testing GET /", function () {
     test("Success condition", async function () {
       // user is logged in and receives all data
-      const response = await request(app).get('/').send({ _token: test1Token })
+      console.log("$$$$$$$ test1Token: ", test1Token);
+
+      const response = await request(app).get("/");
+
+      expect(response.statusCode).toEqual(200);
+      expect(response.body).toEqual.any(Array);
+      expect(response.body[1]).toEqual({
+        username: "test1",
+        first_name: "Test1",
+        last_name: "Testy1"
+      });
 
 
     });
