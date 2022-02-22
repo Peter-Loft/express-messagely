@@ -29,7 +29,7 @@ router.get("/:id",
       res.locals.user.username === message.to_user.username) {
       return res.json({ message });
     }
-)
+  });
 
 
 /** POST / - post message.

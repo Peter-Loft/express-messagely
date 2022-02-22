@@ -2,8 +2,8 @@
 
 const Router = require("express").Router;
 const router = new Router();
-const { User } = require("../models/user.js");
-const bcrypt = require("bcrypt");
+const User = require("../models/user");
+
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = require("../config.js");
 const { UnauthorizedError } = require("../expressError.js");
@@ -13,12 +13,14 @@ router.post("/login", async function (req, res, next) {
   const { username, password } = req.body;
 
   if (await User.authenticate(username, password) === true) {
-    const token = await jwt.sign(await User.get(username), SECRET_KEY);
+    const payload = {
+      username: (await User.get(username)).username }
+    const token = jwt.sign(payload, SECRET_KEY);
     return res.json({ token });
   }
-  else {
-    throw new UnauthorizedError("Invalid user/password");
-  }
+
+  throw new UnauthorizedError("Invalid user/password");
+
 });
 
 
@@ -28,17 +30,21 @@ router.post("/login", async function (req, res, next) {
  */
 
 router.post('/register', async function (req, res, next) {
-  const userInputs = req.body;
+  const {username, password, first_name, last_name, phone} = req.body;
 
-  const user = await User.register(userInputs);
+  // console.log("userInputs: ", {username, password, first_name, last_name, phone});
+
+  const user = await User.register({username, password, first_name, last_name, phone});
 
   if (await User.authenticate(username, password) === true) {
-    const token = jwt.sign(await User.get(username), SECRET_KEY);
+    const payload = {
+      username: (await User.get(username)).username }
+    const token = jwt.sign(payload, SECRET_KEY);
     return res.json({ token });
   }
-  else {
-    throw new UnauthorizedError("Invalid user/password");
-  }
+  
+  throw new UnauthorizedError("Invalid user/password");
+
 });
 
 module.exports = router;
