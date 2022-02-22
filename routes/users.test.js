@@ -37,12 +37,12 @@ describe("Testing user routes", function () {
 
   });
 
-  describe("Testing GET /", function () {
+  describe("Testing GET users/", function () {
     test("Success condition", async function () {
       // user is logged in and receives all data
       console.log("$$$$$$$ test1Token: ", test1Token);
 
-      const response = await request(app).get("/");
+      const response = await request(app).get("/users").send({ _token: test1Token });
 
       expect(response.statusCode).toEqual(200);
       expect(response.body).toEqual.any(Array);
@@ -54,9 +54,9 @@ describe("Testing user routes", function () {
 
 
     });
-    test("Failure condition", async function () {
+    // test("Failure condition", async function () {
 
-    });
+    // });
 
   });
 

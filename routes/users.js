@@ -2,7 +2,7 @@
 
 const Router = require("express").Router;
 const router = new Router();
-const { User } = require("../models/user.js");
+const User = require("../models/user.js");
 const { ensureLoggedIn,
   ensureCorrectUser } = require("../middleware/auth");
 
@@ -15,6 +15,7 @@ const { ensureLoggedIn,
 router.get("/",
   ensureLoggedIn,
   async function (req, res, next) {
+    debugger;
     const users = await User.all();
     return res.json({ users });
   });
